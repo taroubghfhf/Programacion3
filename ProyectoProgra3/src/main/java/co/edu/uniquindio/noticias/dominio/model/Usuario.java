@@ -3,8 +3,8 @@ package co.edu.uniquindio.noticias.dominio.model;
 import lombok.Getter;
 import lombok.Setter;
 
-import static co.edu.uniquindio.noticias.utils.validaciones.Validador.validadorNoNull;
-import static co.edu.uniquindio.noticias.utils.validaciones.Validador.validadorCorreo;
+import static co.edu.uniquindio.noticias.infaestructura.utils.validaciones.Validador.validadorNoNull;
+import static co.edu.uniquindio.noticias.infaestructura.utils.validaciones.Validador.validadorCorreo;
 
 @Getter
 @Setter

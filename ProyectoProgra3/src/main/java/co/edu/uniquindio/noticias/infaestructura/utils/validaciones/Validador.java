@@ -1,4 +1,4 @@
-package co.edu.uniquindio.noticias.utils.validaciones;
+package co.edu.uniquindio.noticias.infaestructura.utils.validaciones;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;

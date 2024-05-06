@@ -8,11 +8,12 @@ import lombok.Setter;
 import java.util.List;
 @Getter
 @Setter
-@NoArgsConstructor
-@AllArgsConstructor
 public class GestorProcesamiento extends Persona{
     private List<String> archivosPendientes;
     private List<String> archivosProcesados;
     private String estadoProcesamiento;
 
+    public GestorProcesamiento(String nombre, String apellido, String identificacion, String telefono, Usuario usuario) {
+        super(nombre, apellido, identificacion, telefono, usuario);
+    }
 }

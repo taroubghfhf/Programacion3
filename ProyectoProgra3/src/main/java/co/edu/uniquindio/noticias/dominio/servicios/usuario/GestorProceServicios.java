@@ -17,7 +17,7 @@ import java.util.List;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-public class GestorProceServicios extends GestorProcesamiento {
+public class GestorProceServicios  {
 
     public static void ejecutarProceso(String comando) {
         try {

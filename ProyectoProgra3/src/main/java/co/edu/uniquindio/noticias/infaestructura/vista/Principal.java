@@ -1,14 +1,13 @@
 package co.edu.uniquindio.noticias.infaestructura.vista;
 
-import co.edu.uniquindio.noticias.aplicacion.comando.ClienteComando;
-import co.edu.uniquindio.noticias.aplicacion.comando.PublicadorComando;
+import co.edu.uniquindio.noticias.aplicacion.comando.*;
 import co.edu.uniquindio.noticias.aplicacion.manejador.cliente.ManejadorCrearCliente;
+import co.edu.uniquindio.noticias.aplicacion.manejador.gestorprocesamiento.ManejadorCrearGestorProcesamiento;
+import co.edu.uniquindio.noticias.aplicacion.manejador.gestorprocesamiento.ManejadorProcesarInformacion;
 import co.edu.uniquindio.noticias.aplicacion.manejador.iniciarsesion.ManejadorIniciarSesion;
 import co.edu.uniquindio.noticias.aplicacion.manejador.publicador.ManejadorCrearPublicador;
 import co.edu.uniquindio.noticias.aplicacion.manejador.publicador.ManejadorSubirArchivo;
 import co.edu.uniquindio.noticias.dominio.model.*;
-import co.edu.uniquindio.noticias.aplicacion.comando.AdministradorComando;
-import co.edu.uniquindio.noticias.aplicacion.comando.UsuarioComando;
 import co.edu.uniquindio.noticias.aplicacion.manejador.administrador.ManejadorCrearAdministrador;
 import co.edu.uniquindio.noticias.infaestructura.socket.ServidorSocket;
 import co.edu.uniquindio.noticias.infaestructura.conf.ArchivoConfig;
@@ -29,12 +28,14 @@ public class Principal {
     private static ManejadorCrearCliente manejadorCrearCliente;
     private static ManejadorCrearPublicador manejadorCrearPublicador;
     private static ManejadorSubirArchivo manejadorSubirArchivo;
+    private static ManejadorCrearGestorProcesamiento manejadorCrearGestorProcesamiento;
+    private static ManejadorProcesarInformacion manejadorProcesarInformacion;
 
 
     public static void main(String[] args) {
 
         Persistencia persistencia = Persistencia.getInstaciaAdministrador();
-        persistencia.cargarInfoCSV(RUTA_CSV+DATOS);
+        persistencia.cargarInfoCSV(RUTA_CSV + DATOS);
         Font font = new Font("Arial", Font.BOLD, 14);
 
         UIManager.put("OptionPane.messageFont", font);
@@ -60,7 +61,7 @@ public class Principal {
                     cargarInfoIniciarSesion();
                     break;
                 case 10:
-                    persistencia.guardarInfoCSV(RUTA_CSV+DATOS);
+                    persistencia.guardarInfoCSV(RUTA_CSV + DATOS);
                     servidorSocket.cerrarConexiones();
                     System.exit(0);
                     break;
@@ -104,7 +105,7 @@ public class Principal {
             Persona persona = manejadorIniciarSesion.ejecutar(correo, password);
 
             if (persona instanceof Administrador) {
-                if (servidorSocket == null){
+                if (servidorSocket == null) {
                     servidorSocket = new ServidorSocket();
                     CompletableFuture<Void> future = CompletableFuture.runAsync(() -> {
                         servidorSocket.iniciarSevidor();
@@ -114,13 +115,18 @@ public class Principal {
                 cargarInfoMenuAdministrador();
             }
 
-            if (persona instanceof Cliente){
+            if (persona instanceof Cliente) {
                 JOptionPane.showMessageDialog(null, "Cliente, Inicio de sesion con exito!!");
             }
 
-            if (persona instanceof Publicador){
+            if (persona instanceof Publicador) {
                 JOptionPane.showMessageDialog(null, "Publicador, Inicio de sesion con exito!!");
                 cargarInfoMenuPublicador((Publicador) persona);
+            }
+
+            if (persona instanceof GestorProcesamiento) {
+                JOptionPane.showMessageDialog(null, "Gestor procesador, Inicio de sesion con exito!!");
+                cargarInfoMenuGestorProcesamiento();
             }
 
         } catch (RuntimeException exception) {
@@ -131,7 +137,7 @@ public class Principal {
     public static void cargarInfoMenuAdministrador() {
 
         int opcion = Integer.parseInt(JOptionPane.showInputDialog(null,
-                "1. Crear Publicador\n2. Crear Cliente\n3. Salir",
+                "1. Crear Publicador\n2. Crear Cliente\n3. Crear Gestor Procesamiento\n4. Salir",
                 "Menú",
                 JOptionPane.PLAIN_MESSAGE));
 
@@ -143,6 +149,9 @@ public class Principal {
                 cargarInfoCrearCliente();
                 break;
             case 3:
+                cargarInfoCrearGestorProcesamiento();
+                break;
+            case 4:
                 break;
             default:
                 JOptionPane.showMessageDialog(null, "Opción inválida",
@@ -174,6 +183,30 @@ public class Principal {
         }
     }
 
+    public static void cargarInfoCrearGestorProcesamiento() {
+        manejadorCrearGestorProcesamiento = new ManejadorCrearGestorProcesamiento();
+        String correo = JOptionPane.showInputDialog("Ingrese correo");
+        String password = JOptionPane.showInputDialog("Ingrese contraseña");
+        TipoUsuario tipo = TipoUsuario.GESTOR_PROCESAMIENTO;
+
+
+        UsuarioComando usuarioComando = new UsuarioComando(correo, password, tipo);
+
+        String nombre = JOptionPane.showInputDialog("Ingrese nombre");
+        String apellido = JOptionPane.showInputDialog("Ingrese apellido");
+        String identificacion = JOptionPane.showInputDialog("Ingrese identificacion");
+        String telefono = JOptionPane.showInputDialog("Ingrese telefono");
+
+        GestorProcesamientoComando gestorProcesamientoComando =
+                new GestorProcesamientoComando(nombre, apellido, identificacion, telefono, usuarioComando);
+        try {
+            manejadorCrearGestorProcesamiento.ejecutar(gestorProcesamientoComando);
+            JOptionPane.showMessageDialog(null, "Gestor procesamiento creado");
+        } catch (RuntimeException exception) {
+            JOptionPane.showMessageDialog(null, exception.getMessage());
+        }
+    }
+
     public static void cargarInfoCrearPublicador() {
         manejadorCrearPublicador = new ManejadorCrearPublicador();
         String correo = JOptionPane.showInputDialog("Ingrese correo");
@@ -197,8 +230,8 @@ public class Principal {
         }
     }
 
-    public static void cargarInfoMenuPublicador(Publicador publicador){
-        manejadorSubirArchivo =  new ManejadorSubirArchivo();
+    public static void cargarInfoMenuPublicador(Publicador publicador) {
+        manejadorSubirArchivo = new ManejadorSubirArchivo();
         int opcion = Integer.parseInt(JOptionPane.showInputDialog(null,
                 "1. Subir Articulo o foto\n3. Salir",
                 "Menú",
@@ -206,9 +239,27 @@ public class Principal {
         switch (opcion) {
             case 1:
                 String rutaArchivo = JOptionPane.showInputDialog("Ingrese la ruta del archivo xml o foto");
-                manejadorSubirArchivo.ejecutar(rutaArchivo,publicador);
+                manejadorSubirArchivo.ejecutar(rutaArchivo, publicador);
                 break;
             case 3:
+                break;
+            default:
+                JOptionPane.showMessageDialog(null, "Opción inválida",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void cargarInfoMenuGestorProcesamiento() {
+        manejadorProcesarInformacion = new ManejadorProcesarInformacion();
+        int opcion = Integer.parseInt(JOptionPane.showInputDialog(null,
+                "1. Procesar información\n2. Salir",
+                "Menú",
+                JOptionPane.PLAIN_MESSAGE));
+        switch (opcion) {
+            case 1:
+                manejadorProcesarInformacion.ejecutar();
+                break;
+            case 2:
                 break;
             default:
                 JOptionPane.showMessageDialog(null, "Opción inválida",

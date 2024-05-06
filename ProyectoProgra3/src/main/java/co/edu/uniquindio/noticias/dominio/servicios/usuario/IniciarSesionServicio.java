@@ -6,7 +6,7 @@ import co.edu.uniquindio.noticias.dominio.puerto.usuario.UsuarioDAO;
 
 import java.util.Optional;
 
-import static co.edu.uniquindio.noticias.utils.validaciones.Validador.validadorCorreo;
+import static co.edu.uniquindio.noticias.infaestructura.utils.validaciones.Validador.validadorCorreo;
 
 public class IniciarSesionServicio {
     private static final String CORREO_INVALIDO = "Debe ingresar un correo valido";
