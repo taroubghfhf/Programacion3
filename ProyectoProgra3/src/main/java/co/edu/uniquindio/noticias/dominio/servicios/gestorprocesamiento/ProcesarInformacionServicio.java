@@ -4,6 +4,7 @@ package co.edu.uniquindio.noticias.dominio.servicios.gestorprocesamiento;
 import co.edu.uniquindio.noticias.infaestructura.conf.ArchivoConfig;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
+
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
 import java.util.zip.ZipEntry;
@@ -15,31 +16,36 @@ public class ProcesarInformacionServicio {
 
     public void ejecutar() {
         File directorio = new File(DIRECTORIO + "\\" + NOMBRE_CARPETA);
-        File archivoCSV = new File("archivo.csv");
+        procesarDirectorio(directorio);
 
-        try (FileWriter fileWriter = new FileWriter(archivoCSV);
-             BufferedWriter bufferedWriter = new BufferedWriter(fileWriter)) {
+        File[] archivos = directorio.listFiles();
+        for (File archivo : archivos) {
+            if (archivo.isDirectory()) {
+                try {
+                    File archivoCSV = new File(archivo.getAbsoluteFile() + "\\" + "archivo.csv");
+                    FileWriter fileWriter = new FileWriter(archivoCSV);
+                    BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+                    bufferedWriter.write("titulo,fecha,cuerpo\n");
+                    procesarArchivos(archivo.getAbsoluteFile(), bufferedWriter);
+                    bufferedWriter.close();
+                } catch (Exception e) {
 
-            bufferedWriter.write("titulo,fecha,cuerpo\n");
-
-            procesarDirectorio(directorio);
-            procesarArchivos(directorio,bufferedWriter);
-
-        } catch (IOException e) {
-            e.printStackTrace();
+                }
+            }
         }
     }
 
-    private static void procesarArchivos(File directorio, BufferedWriter bufferedWriter){
+    private static void procesarArchivos(File directorio, BufferedWriter bufferedWriter) {
         File[] archivos = directorio.listFiles();
         for (File archivo : archivos) {
             if (archivo.isFile() && archivo.getName().endsWith(".xml")) {
-                procesarArchivoXML(archivo,bufferedWriter);
+                procesarArchivoXML(archivo, bufferedWriter);
             } else if (archivo.isDirectory()) {
                 procesarArchivos(archivo, bufferedWriter);
             }
         }
     }
+
     private static void procesarDirectorio(File directorio) {
         File[] archivos = directorio.listFiles();
         for (File archivo : archivos) {
@@ -59,7 +65,7 @@ public class ProcesarInformacionServicio {
             if (!directorio.exists()) {
                 directorio.mkdirs();
             }
-            archivoZip = directorioDestino+"\\"+archivoZip;
+            archivoZip = directorioDestino + "\\" + archivoZip;
 
             ZipInputStream zis = new ZipInputStream(new FileInputStream(archivoZip));
             ZipEntry entrada;
@@ -114,6 +120,7 @@ public class ProcesarInformacionServicio {
             // Escribir en el archivo CSV
             bufferedWriter.write(String.format("\"%s\",\"%s\",\"%s\"\n", titulo, fecha, contenido));
 
+            archivoXML.delete();
         } catch (Exception e) {
             e.printStackTrace();
         }
