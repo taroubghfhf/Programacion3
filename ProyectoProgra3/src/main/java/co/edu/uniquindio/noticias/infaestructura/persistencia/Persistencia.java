@@ -13,6 +13,7 @@ public class Persistencia {
     private List<Cliente> clientes = new ArrayList<>();
     private List<Publicador> publicadors = new ArrayList<>();
     private List<GestorProcesamiento> gestorProcesamientos = new ArrayList<>();
+    private List<GestorEnvio> gestorEnvios = new ArrayList<>();
 
     private Persistencia() {}
 
@@ -39,12 +40,17 @@ public class Persistencia {
         return gestorProcesamientos;
     }
 
+    public List<GestorEnvio> getGestorEnvios(){
+        return gestorEnvios;
+    }
+
     public void guardarInfoCSV(String ruta) {
         List<Persona> personas = new ArrayList<>();
         personas.addAll(administradores);
         personas.addAll(clientes);
         personas.addAll(publicadors);
         personas.addAll(gestorProcesamientos);
+        personas.addAll(gestorEnvios);
         try (PrintWriter writer = new PrintWriter(new File(ruta))) {
             StringBuilder sb = new StringBuilder();
             sb.append("Nombre,Apellido,Identificacion,Telefono,Correo,Password,Tipo\n");
@@ -86,6 +92,9 @@ public class Persistencia {
                     } else if (TipoUsuario.GESTOR_PROCESAMIENTO.getNombre().equals(tipo)){
                         Usuario usuario = new Usuario(correo,password,TipoUsuario.GESTOR_PROCESAMIENTO);
                         gestorProcesamientos.add(new GestorProcesamiento(nombre,apellido,identificacion,telefono,usuario));
+                    }else if (TipoUsuario.GESTOR_ENVIO.getNombre().equals(tipo)){
+                        Usuario usuario = new Usuario(correo,password,TipoUsuario.GESTOR_ENVIO);
+                        gestorEnvios.add(new GestorEnvio(nombre,apellido,identificacion,telefono,usuario));
                     }
                 }
             }

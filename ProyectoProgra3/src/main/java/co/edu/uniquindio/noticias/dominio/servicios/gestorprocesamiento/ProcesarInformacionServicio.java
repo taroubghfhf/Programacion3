@@ -7,27 +7,53 @@ import org.w3c.dom.Element;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class ProcesarInformacionServicio {
     private static final String DIRECTORIO = ArchivoConfig.getProperty("ruta.base");
+    private static final String IS_MAC = ArchivoConfig.getProperty("so");
     private static String NOMBRE_CARPETA = "publicadores";
 
     public void ejecutar() {
-        File directorio = new File(DIRECTORIO + "\\" + NOMBRE_CARPETA);
+        File directorio;
+        if (IS_MAC.equals("mac")) {
+             directorio = new File(DIRECTORIO  + NOMBRE_CARPETA);
+        }else {
+            directorio = new File(DIRECTORIO + "\\" + NOMBRE_CARPETA);
+        }
         procesarDirectorio(directorio);
+        String fechaActual = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
+
 
         File[] archivos = directorio.listFiles();
         for (File archivo : archivos) {
             if (archivo.isDirectory()) {
                 try {
-                    File archivoCSV = new File(archivo.getAbsoluteFile() + "\\" + "archivo.csv");
+                    File archivoCSV;
+                    File archivoCSVFoto;
+                    if (IS_MAC.equals("mac")) {
+                        archivoCSV = new File(archivo.getAbsoluteFile() + "/" + "archivo_"+fechaActual+".csv");
+                        archivoCSVFoto = new File(archivo.getAbsoluteFile() + "/" + "fotos_"+fechaActual+".csv");
+                    }else {
+                        archivoCSV = new File(archivo.getAbsoluteFile() + "\\" + "archivo_"+fechaActual+".csv");
+                        archivoCSVFoto = new File(archivo.getAbsoluteFile() + "\\" + "fotos_"+fechaActual+".csv");
+                    }
+
                     FileWriter fileWriter = new FileWriter(archivoCSV);
+                    FileWriter fileWriterFotos = new FileWriter(archivoCSVFoto);
                     BufferedWriter bufferedWriter = new BufferedWriter(fileWriter);
+                    BufferedWriter bufferedWriterFotos = new BufferedWriter(fileWriterFotos);
                     bufferedWriter.write("titulo,fecha,cuerpo\n");
-                    procesarArchivos(archivo.getAbsoluteFile(), bufferedWriter);
+                    bufferedWriterFotos.write("Nombre,Fecha de Creación\n");
+                    procesarArchivos(archivo.getAbsoluteFile(), bufferedWriter,bufferedWriterFotos);
                     bufferedWriter.close();
+                    bufferedWriterFotos.close();
                 } catch (Exception e) {
 
                 }
@@ -35,13 +61,15 @@ public class ProcesarInformacionServicio {
         }
     }
 
-    private static void procesarArchivos(File directorio, BufferedWriter bufferedWriter) {
+    private static void procesarArchivos(File directorio, BufferedWriter bufferedWriter,BufferedWriter bufferedWriterFotos) {
         File[] archivos = directorio.listFiles();
         for (File archivo : archivos) {
             if (archivo.isFile() && archivo.getName().endsWith(".xml")) {
                 procesarArchivoXML(archivo, bufferedWriter);
+            } else if (archivo.isFile() && archivo.getName().endsWith(".jpg")){
+                procesarFoto(archivo,bufferedWriterFotos);
             } else if (archivo.isDirectory()) {
-                procesarArchivos(archivo, bufferedWriter);
+                procesarArchivos(archivo, bufferedWriter,bufferedWriterFotos);
             }
         }
     }
@@ -111,17 +139,30 @@ public class ProcesarInformacionServicio {
             Document documento = dbFactory.newDocumentBuilder().parse(archivoXML);
 
             Element root = documento.getDocumentElement();
-            String titulo = root.getElementsByTagName("title").item(0).getTextContent();
+            String titulo = root.getElementsByTagName("title").item(0).getTextContent().replaceAll("\\r|\\n", " ").trim();
 
             Element docdata = (Element) root.getElementsByTagName("docdata").item(0);
-            String fecha = docdata.getElementsByTagName("date.issue").item(0).getTextContent();
-            String contenido = root.getElementsByTagName("body.content").item(0).getTextContent();
+            String fecha = docdata.getElementsByTagName("date.issue").item(0).getTextContent().replaceAll("\\r|\\n", " ").trim();
+            String contenido = root.getElementsByTagName("body.content").item(0).getTextContent().replaceAll("\\r|\\n", " ").trim();
 
-            // Escribir en el archivo CSV
-            bufferedWriter.write(String.format("\"%s\",\"%s\",\"%s\"\n", titulo, fecha, contenido));
+            bufferedWriter.write(String.format("%s;%s;%s\n", titulo, fecha, contenido));
 
             archivoXML.delete();
         } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    private static void procesarFoto(File archivo, BufferedWriter bufferedWriterFotos) {
+        try {
+            Path path = archivo.toPath();
+            BasicFileAttributes attr = Files.readAttributes(path, BasicFileAttributes.class);
+
+            String nombre = archivo.getName();
+            String fechaCreacion = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date(attr.creationTime().toMillis()));
+            bufferedWriterFotos.write(String.format("\"%s\",\"%s\"\n", nombre, fechaCreacion));
+            archivo.delete();
+        } catch (IOException e) {
             e.printStackTrace();
         }
     }

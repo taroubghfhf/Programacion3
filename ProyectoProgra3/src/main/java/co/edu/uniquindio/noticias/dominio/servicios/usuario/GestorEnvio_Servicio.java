@@ -8,7 +8,7 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.List;
-public class GestorEnvio_Servicio extends GestorEnvio {
+public class GestorEnvio_Servicio  {
 
     public void ejecutarEnvio(String rutaArchivo, String destino) {
         File archivo = new File(rutaArchivo);

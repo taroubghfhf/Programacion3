@@ -1,6 +1,5 @@
 package co.edu.uniquindio.noticias.infaestructura.adaptador.gestorprocesamiento;
 
-import co.edu.uniquindio.noticias.dominio.model.Cliente;
 import co.edu.uniquindio.noticias.dominio.model.GestorProcesamiento;
 import co.edu.uniquindio.noticias.dominio.puerto.gestorprocesamiento.GestorProcesamientoDAO;
 import co.edu.uniquindio.noticias.infaestructura.persistencia.Persistencia;

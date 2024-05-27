@@ -23,6 +23,7 @@ public class UsuarioImplementacionDAO implements UsuarioDAO {
         personas.addAll(persistencia.getClientes());
         personas.addAll(persistencia.getPublicadors());
         personas.addAll(persistencia.getGestorProcesamientos());
+        personas.addAll(persistencia.getGestorEnvios());
 
 
         Optional<Persona> personaEncontrada = personas.stream()

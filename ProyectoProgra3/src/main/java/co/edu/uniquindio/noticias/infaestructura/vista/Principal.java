@@ -2,6 +2,8 @@ package co.edu.uniquindio.noticias.infaestructura.vista;
 
 import co.edu.uniquindio.noticias.aplicacion.comando.*;
 import co.edu.uniquindio.noticias.aplicacion.manejador.cliente.ManejadorCrearCliente;
+import co.edu.uniquindio.noticias.aplicacion.manejador.gestorenvio.ManejadorCrearGestorEnvio;
+import co.edu.uniquindio.noticias.aplicacion.manejador.gestorenvio.ManejadorProcesarEnvio;
 import co.edu.uniquindio.noticias.aplicacion.manejador.gestorprocesamiento.ManejadorCrearGestorProcesamiento;
 import co.edu.uniquindio.noticias.aplicacion.manejador.gestorprocesamiento.ManejadorProcesarInformacion;
 import co.edu.uniquindio.noticias.aplicacion.manejador.iniciarsesion.ManejadorIniciarSesion;
@@ -9,15 +11,21 @@ import co.edu.uniquindio.noticias.aplicacion.manejador.publicador.ManejadorCrear
 import co.edu.uniquindio.noticias.aplicacion.manejador.publicador.ManejadorSubirArchivo;
 import co.edu.uniquindio.noticias.dominio.model.*;
 import co.edu.uniquindio.noticias.aplicacion.manejador.administrador.ManejadorCrearAdministrador;
+import co.edu.uniquindio.noticias.infaestructura.socket.ClienteSocket;
 import co.edu.uniquindio.noticias.infaestructura.socket.ServidorSocket;
 import co.edu.uniquindio.noticias.infaestructura.conf.ArchivoConfig;
 import co.edu.uniquindio.noticias.infaestructura.persistencia.Persistencia;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.concurrent.CompletableFuture;
 
+
 public class Principal {
+
+    private static final Logger logger = LoggerFactory.getLogger(Principal.class);
 
     public static final String RUTA_CSV = ArchivoConfig.getProperty("ruta.base");
 
@@ -30,9 +38,13 @@ public class Principal {
     private static ManejadorSubirArchivo manejadorSubirArchivo;
     private static ManejadorCrearGestorProcesamiento manejadorCrearGestorProcesamiento;
     private static ManejadorProcesarInformacion manejadorProcesarInformacion;
+    private static ManejadorCrearGestorEnvio manejadorCrearGestorEnvio;
+    private static ManejadorProcesarEnvio manejadorProcesarEnvio;
 
 
     public static void main(String[] args) {
+
+        logger.info("Aplicación iniciada");
 
         Persistencia persistencia = Persistencia.getInstaciaAdministrador();
         persistencia.cargarInfoCSV(RUTA_CSV + DATOS);
@@ -63,6 +75,7 @@ public class Principal {
                 case 10:
                     persistencia.guardarInfoCSV(RUTA_CSV + DATOS);
                     servidorSocket.cerrarConexiones();
+                    logger.info("Aplicación finalizada");
                     System.exit(0);
                     break;
                 default:
@@ -70,6 +83,7 @@ public class Principal {
                             "Error", JOptionPane.ERROR_MESSAGE);
             }
         } while (opcion != 10);
+
     }
 
     public static void cargarInfoCrearAdministrador() {
@@ -116,6 +130,8 @@ public class Principal {
             }
 
             if (persona instanceof Cliente) {
+                ClienteSocket clienteSocket = new ClienteSocket();
+                clienteSocket.iniciarEscuchar(persona.getIdentificacion());
                 JOptionPane.showMessageDialog(null, "Cliente, Inicio de sesion con exito!!");
             }
 
@@ -129,6 +145,11 @@ public class Principal {
                 cargarInfoMenuGestorProcesamiento();
             }
 
+            if (persona instanceof  GestorEnvio) {
+                JOptionPane.showMessageDialog(null, "Gestor envio, Inicio de sesion con exito!!");
+                cargarInfoMenuGestorEnvio();
+            }
+
         } catch (RuntimeException exception) {
             JOptionPane.showMessageDialog(null, exception.getMessage());
         }
@@ -137,7 +158,7 @@ public class Principal {
     public static void cargarInfoMenuAdministrador() {
 
         int opcion = Integer.parseInt(JOptionPane.showInputDialog(null,
-                "1. Crear Publicador\n2. Crear Cliente\n3. Crear Gestor Procesamiento\n4. Salir",
+                "1. Crear Publicador\n2. Crear Cliente\n3. Crear Gestor Procesamiento\n4. Crear Gestor Envio\n5. Salir",
                 "Menú",
                 JOptionPane.PLAIN_MESSAGE));
 
@@ -152,6 +173,9 @@ public class Principal {
                 cargarInfoCrearGestorProcesamiento();
                 break;
             case 4:
+                cargarInfoCrearGestorEnvio();
+                break;
+            case 5:
                 break;
             default:
                 JOptionPane.showMessageDialog(null, "Opción inválida",
@@ -202,6 +226,30 @@ public class Principal {
         try {
             manejadorCrearGestorProcesamiento.ejecutar(gestorProcesamientoComando);
             JOptionPane.showMessageDialog(null, "Gestor procesamiento creado");
+        } catch (RuntimeException exception) {
+            JOptionPane.showMessageDialog(null, exception.getMessage());
+        }
+    }
+
+    public static void cargarInfoCrearGestorEnvio() {
+        manejadorCrearGestorEnvio = new ManejadorCrearGestorEnvio();
+        String correo = JOptionPane.showInputDialog("Ingrese correo");
+        String password = JOptionPane.showInputDialog("Ingrese contraseña");
+        TipoUsuario tipo = TipoUsuario.GESTOR_ENVIO;
+
+
+        UsuarioComando usuarioComando = new UsuarioComando(correo, password, tipo);
+
+        String nombre = JOptionPane.showInputDialog("Ingrese nombre");
+        String apellido = JOptionPane.showInputDialog("Ingrese apellido");
+        String identificacion = JOptionPane.showInputDialog("Ingrese identificacion");
+        String telefono = JOptionPane.showInputDialog("Ingrese telefono");
+
+        GestorEnvioComando gestorEnvioComando =
+                new GestorEnvioComando(nombre, apellido, identificacion, telefono, usuarioComando);
+        try {
+            manejadorCrearGestorEnvio.ejecutar(gestorEnvioComando);
+            JOptionPane.showMessageDialog(null, "Gestor envio creado");
         } catch (RuntimeException exception) {
             JOptionPane.showMessageDialog(null, exception.getMessage());
         }
@@ -258,6 +306,24 @@ public class Principal {
         switch (opcion) {
             case 1:
                 manejadorProcesarInformacion.ejecutar();
+                break;
+            case 2:
+                break;
+            default:
+                JOptionPane.showMessageDialog(null, "Opción inválida",
+                        "Error", JOptionPane.ERROR_MESSAGE);
+        }
+    }
+
+    public static void cargarInfoMenuGestorEnvio() {
+        manejadorProcesarEnvio = new ManejadorProcesarEnvio();
+        int opcion = Integer.parseInt(JOptionPane.showInputDialog(null,
+                "1. Procesar envio\n2. Salir",
+                "Menú",
+                JOptionPane.PLAIN_MESSAGE));
+        switch (opcion) {
+            case 1:
+                manejadorProcesarEnvio.ejecutar();
                 break;
             case 2:
                 break;
