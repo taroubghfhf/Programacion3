@@ -1,7 +1,10 @@
 package co.edu.uniquindio.noticias.dominio.servicios.gestorprocesamiento;
 
 
+import co.edu.uniquindio.noticias.dominio.servicios.gestorenvio.ProcesarEnvioServicio;
 import co.edu.uniquindio.noticias.infaestructura.conf.ArchivoConfig;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 
@@ -20,7 +23,11 @@ public class ProcesarInformacionServicio {
     private static final String IS_MAC = ArchivoConfig.getProperty("so");
     private static String NOMBRE_CARPETA = "publicadores";
 
+    private static final Logger logger = LoggerFactory.getLogger(ProcesarInformacionServicio.class);
+
+
     public void ejecutar() {
+        logger.info("Se inicia proceso de carga de informacion");
         File directorio;
         if (IS_MAC.equals("mac")) {
              directorio = new File(DIRECTORIO  + NOMBRE_CARPETA);

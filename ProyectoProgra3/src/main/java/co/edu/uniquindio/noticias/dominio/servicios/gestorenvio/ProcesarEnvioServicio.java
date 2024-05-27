@@ -1,7 +1,10 @@
 package co.edu.uniquindio.noticias.dominio.servicios.gestorenvio;
 
+import co.edu.uniquindio.noticias.dominio.servicios.cliente.CrearClienteServicio;
 import co.edu.uniquindio.noticias.infaestructura.conf.ArchivoConfig;
 import co.edu.uniquindio.noticias.infaestructura.socket.ServidorSocket;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 
@@ -11,6 +14,9 @@ public class ProcesarEnvioServicio {
     private static final String IS_MAC = ArchivoConfig.getProperty("so");
     private static String NOMBRE_CARPETA = "publicadores";
 
+
+    private static final Logger logger = LoggerFactory.getLogger(ProcesarEnvioServicio.class);
+
     public void ejecutar() {
         File directorio;
         if (IS_MAC.equals("mac")) {
@@ -18,7 +24,9 @@ public class ProcesarEnvioServicio {
         }else {
             directorio = new File(DIRECTORIO + "\\" + NOMBRE_CARPETA);
         }
+        logger.info("Se procesan archivos para ser enviados");
         procesarArchivos(directorio);
+        logger.info("Se envian archivos para ser enviados");
         procesarArchivosEnvio(directorio);
 
     }
